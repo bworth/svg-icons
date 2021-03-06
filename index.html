@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ben Worthington’s CV</title>
+</head>
+
+<body>
+<template id="svg-icon">
+<style>
+:host {
+	all: initial;
+	color: inherit;
+	contain: content;
+	display: inline-block;
+	font-size: inherit;
+	height: 0;
+	transition: opacity 500ms;
+	width: 0;
+}
+
+:host(:not(:defined)) {
+	opacity: 0;
+}
+
+:host([hidden]) {
+	display: none;
+}
+
+:host([icon]) {
+	height: 1em;
+	width: 1em;
+}
+
+svg {
+	display: block;
+	fill: var(--svg-icon-fill, currentColor);
+	height: 100%;
+	stroke: var(--svg-icon-stroke, currentColor);
+	stroke-width: var(--svg-icon-stroke-width, 0.2em);
+	width: 100%;
+}
+</style>
+<svg role="presentation"><use /></svg>
+</template>
+
+<svg-icon icon="chevron-down" label="Toggle"></svg-icon>
+
+<script>
+window.customElements.define('svg-icon', class extends HTMLElement {
+	static get observedAttributes() {
+		return ['icon', 'label'];
+	}
+
+	constructor() {
+		super();
+
+		this.attachShadow({ mode: 'open' }).appendChild(document.querySelector('#svg-icon').content.cloneNode(true));
+		this._svgUse = this.shadowRoot.querySelector('use');
+	}
+
+	connectedCallback() {
+		if (this.isConnected) {
+			this.constructor.observedAttributes.forEach(this._upgradeProperty, this);
+			this._updateLabel(this.label);
+		}
+	}
+
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (newValue !== oldValue) {
+			switch (name) {
+				case 'icon':
+					this._updateIcon(newValue);
+					break;
+				case 'label':
+					this._updateLabel(newValue);
+					break;
+			}
+		}
+	}
+
+	_addPropertyAccessors(name, isBoolean = false) {
+		if (isBoolean) {
+			Object.defineProperty(this, name, {
+				get() {
+					return this.hasAttribute(name);
+				},
+				set(value) {
+					if (value) {
+						this.setAttribute(name, '');
+					} else {
+						this.removeAttribute(name);
+					}
+				}
+			});
+		} else {
+			Object.defineProperty(this, name, {
+				get() {
+					return this.getAttribute(name);
+				},
+				set(value) {
+					if (value) {
+						this.setAttribute(name, value);
+					} else {
+						this.removeAttribute(name);
+					}
+				}
+			});
+		}
+	}
+
+	_updateIcon(icon) {
+		this._svgUse.setAttribute('href', 'icons.svg#' + icon);
+	}
+
+	_updateLabel(label) {
+		if (label) {
+			if (!this.hasAttribute('role')) {
+				this.setAttribute('role', 'img');
+			}
+
+			this.setAttribute('aria-label', label);
+			this.removeAttribute('aria-hidden');
+		} else {
+			this.setAttribute('aria-hidden', 'true');
+			this.removeAttribute('aria-label');
+		}
+	}
+
+	_upgradeProperty(name) {
+		if (this.hasOwnProperty(name)) {
+			const value = this[name];
+
+			this._addPropertyAccessors(name);
+			this[name] = value;
+		} else {
+			this._addPropertyAccessors(name);
+		}
+	}
+});
+</script>
+</body>
+</html>
